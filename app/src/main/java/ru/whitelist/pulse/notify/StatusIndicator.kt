@@ -87,9 +87,9 @@ object StatusIndicator {
 
     @DrawableRes
     fun VerdictKind.iconRes(): Int = when (this) {
-        VerdictKind.NORMAL -> R.drawable.ic_status_circle_plus
-        VerdictKind.NO_INTERNET -> R.drawable.ic_status_circle_minus
-        else -> R.drawable.ic_status_circle_v
+        VerdictKind.NORMAL -> R.drawable.ic_status_circle_full
+        VerdictKind.NO_INTERNET -> R.drawable.ic_status_circle_empty
+        else -> R.drawable.ic_status_circle_half
     }
 
     fun VerdictKind.colorInt(): Int = when (this) {

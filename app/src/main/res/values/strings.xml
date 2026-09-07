@@ -140,7 +140,7 @@
     <string name="settings_whitelist_only">Режим «только белый список»</string>
     <string name="settings_notify">Уведомлять о результате проверки</string>
     <string name="settings_status_icon">Значок в строке состояния</string>
-    <string name="settings_status_icon_hint">Раз в минуту в фоне проверяет доступность. В строке состояния кружок: + — обычный интернет, V — ограничения или неоднозначно, − — сети нет.</string>
+    <string name="settings_status_icon_hint">Раз в минуту в фоне проверяет доступность. В строке состояния кружок: полный — обычный интернет, наполовину — ограничения или неоднозначно, пустой — сети нет.</string>
     <string name="notification_channel_status">Индикатор сети</string>
     <string name="status_indicator_subtitle">Фоновая проверка раз в минуту</string>
     <string name="interval_off">Выкл</string>
