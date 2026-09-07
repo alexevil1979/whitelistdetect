@@ -139,8 +139,8 @@
     <string name="settings_privacy">Policy: checks run on-device, history stays local, no telemetry, no mandatory first-party servers.</string>
     <string name="settings_whitelist_only">Allowlist-only mode</string>
     <string name="settings_notify">Notify about check results</string>
-    <string name="settings_status_icon">Status bar dot</string>
-    <string name="settings_status_icon_hint">Every minute in the background, checks site reachability and updates the colored dot next to the network icons. The color matches the home-screen verdict.</string>
+    <string name="settings_status_icon">Status bar icon</string>
+    <string name="settings_status_icon_hint">Every minute in the background, checks reachability. Status bar silhouette: thumbs up for regular internet, fist for restrictions or mixed results, thumbs down for no network.</string>
     <string name="notification_channel_status">Network indicator</string>
     <string name="status_indicator_subtitle">Background check every minute</string>
     <string name="interval_off">Off</string>
