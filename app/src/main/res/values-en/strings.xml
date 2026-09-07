@@ -140,7 +140,7 @@
     <string name="settings_whitelist_only">Allowlist-only mode</string>
     <string name="settings_notify">Notify about check results</string>
     <string name="settings_status_icon">Status bar icon</string>
-    <string name="settings_status_icon_hint">Every minute in the background, checks reachability. Status bar circle: V+ for regular internet, V for restrictions or mixed results, X for no network.</string>
+    <string name="settings_status_icon_hint">Every minute in the background, checks reachability. Status bar circle: + for regular internet, V for restrictions or mixed results, − for no network.</string>
     <string name="notification_channel_status">Network indicator</string>
     <string name="status_indicator_subtitle">Background check every minute</string>
     <string name="interval_off">Off</string>
