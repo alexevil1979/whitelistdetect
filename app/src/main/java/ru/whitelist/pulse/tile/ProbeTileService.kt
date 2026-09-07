@@ -40,6 +40,7 @@ class ProbeTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
+        coordinator.start(scope)
         qsTile?.state = Tile.STATE_ACTIVE
         qsTile?.updateTile()
         coordinator.run(scope)

@@ -12,7 +12,7 @@ import ru.whitelist.pulse.domain.model.SiteEndpoint
 import ru.whitelist.pulse.domain.model.SiteGroup
 import ru.whitelist.pulse.domain.repository.SettingsRepository
 import ru.whitelist.pulse.domain.usecase.ManageCustomSites
-import ru.whitelist.pulse.data.local.AssetEndpointRepository
+import ru.whitelist.pulse.domain.repository.EndpointRepository
 import ru.whitelist.pulse.domain.repository.HistoryRepository
 import javax.inject.Inject
 
@@ -22,7 +22,7 @@ class PulseViewModel @Inject constructor(
     private val coordinator: ProbeCoordinator,
     private val settingsRepository: SettingsRepository,
     private val manageCustomSites: ManageCustomSites,
-    private val endpointRepository: AssetEndpointRepository,
+    private val endpointRepository: EndpointRepository,
     private val historyRepository: HistoryRepository,
 ) : AndroidViewModel(application) {
 
@@ -79,5 +79,10 @@ class PulseViewModel @Inject constructor(
                 ?: return@launch
             runCatching { endpointRepository.replaceBundledFromJson(json) }
         }
+    }
+
+    override fun onCleared() {
+        coordinator.cancelProbe()
+        super.onCleared()
     }
 }

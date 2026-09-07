@@ -29,6 +29,7 @@ interface VpnRepository {
 interface EndpointRepository {
     fun observeEndpoints(): Flow<List<SiteEndpoint>>
     suspend fun endpoints(): List<SiteEndpoint>
+    suspend fun dnsControls(): List<String>
     suspend fun replaceBundledFromJson(json: String)
 }
 

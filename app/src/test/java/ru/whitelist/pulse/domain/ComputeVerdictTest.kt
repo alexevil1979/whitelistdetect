@@ -116,4 +116,50 @@ class ComputeVerdictTest {
         )
         assertEquals(VerdictKind.ABROAD_OR_BYPASS, verdict.kind)
     }
+
+    @Test
+    fun aDownBOkIsPartial() {
+        val verdict = engine.compute(
+            a = stats(SiteGroup.WHITELIST, 0, 15),
+            b = stats(SiteGroup.REGULAR, 8, 10),
+            c = stats(SiteGroup.RESTRICTED, 1, 10),
+            vpnActive = false,
+        )
+        assertEquals(VerdictKind.PARTIAL, verdict.kind)
+    }
+
+    @Test
+    fun cOpenWithoutAllowlistIsPartial() {
+        val verdict = engine.compute(
+            a = stats(SiteGroup.WHITELIST, 0, 15),
+            b = stats(SiteGroup.REGULAR, 1, 10),
+            c = stats(SiteGroup.RESTRICTED, 9, 10),
+            vpnActive = false,
+        )
+        assertEquals(VerdictKind.PARTIAL, verdict.kind)
+    }
+
+    @Test
+    fun cBorderlineKeepsNormalWhenAAndBOk() {
+        val verdict = engine.compute(
+            a = stats(SiteGroup.WHITELIST, 12, 15),
+            b = stats(SiteGroup.REGULAR, 7, 10),
+            c = stats(SiteGroup.RESTRICTED, 2, 10),
+            vpnActive = false,
+        )
+        assertEquals(VerdictKind.NORMAL, verdict.kind)
+    }
+
+    @Test
+    fun whitelistOnlyIgnoresOtherGroupsWhenFlagsOff() {
+        val verdict = engine.compute(
+            a = stats(SiteGroup.WHITELIST, 14, 15),
+            b = stats(SiteGroup.REGULAR, 0, 10),
+            c = stats(SiteGroup.RESTRICTED, 0, 10),
+            vpnActive = false,
+            includeRegular = false,
+            includeRestricted = false,
+        )
+        assertEquals(VerdictKind.WHITELIST_MODE, verdict.kind)
+    }
 }

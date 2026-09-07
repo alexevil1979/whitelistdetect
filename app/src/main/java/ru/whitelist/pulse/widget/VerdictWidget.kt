@@ -1,6 +1,7 @@
 package ru.whitelist.pulse.widget
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -11,9 +12,11 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
@@ -30,6 +33,7 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
+import ru.whitelist.pulse.MainActivity
 import ru.whitelist.pulse.R
 import ru.whitelist.pulse.domain.model.VerdictKind
 
@@ -87,6 +91,7 @@ private fun WidgetContent(context: Context, kind: VerdictKind, vpn: Boolean) {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
+                .clickable(actionStartActivity(Intent(context, MainActivity::class.java)))
                 .background(ColorProvider(Color(0xFFF8FAFC)))
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,

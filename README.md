@@ -17,9 +17,19 @@
 
 Требования: JDK 17, Android SDK 35.
 
+Windows:
+
 ```bat
 gradlew.bat assembleDebug
 gradlew.bat testDebugUnitTest
+```
+
+macOS / Linux:
+
+```sh
+chmod +x gradlew
+./gradlew assembleDebug
+./gradlew testDebugUnitTest
 ```
 
 Открыть папку в Android Studio и запустить конфигурацию `app`.

@@ -26,15 +26,15 @@ class AssetEndpointRepository @Inject constructor(
     override fun observeEndpoints(): Flow<List<SiteEndpoint>> =
         refresh.map { load() }
 
-    suspend fun dnsControls(): List<String> {
+    override suspend fun endpoints(): List<SiteEndpoint> = load()
+
+    override suspend fun dnsControls(): List<String> {
         val override = bundledDao.get()?.json
         val raw = override ?: context.assets.open("endpoints.json").bufferedReader().use { it.readText() }
         return runCatching {
             json.decodeFromString(EndpointsFile.serializer(), raw).dnsControls
         }.getOrDefault(emptyList())
     }
-
-    override suspend fun endpoints(): List<SiteEndpoint> = load()
 
     override suspend fun replaceBundledFromJson(jsonText: String) {
         json.decodeFromString(EndpointsFile.serializer(), jsonText).toEndpoints()

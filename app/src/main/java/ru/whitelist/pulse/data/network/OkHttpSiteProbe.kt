@@ -1,6 +1,8 @@
 package ru.whitelist.pulse.data.network
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -15,6 +17,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import javax.net.ssl.SSLException
+import kotlin.coroutines.resume
 import kotlin.math.roundToLong
 
 @Singleton
@@ -25,9 +28,13 @@ class OkHttpSiteProbe @Inject constructor(
     override suspend fun probe(endpoint: SiteEndpoint, timeoutSec: Int): SiteCheckResult {
         val started = System.currentTimeMillis()
         val internals = withContext(Dispatchers.IO) {
-            runCatching { probeOnce(endpoint, timeoutSec) }
-                .recoverCatching { probeOnce(endpoint, timeoutSec) }
-                .getOrElse { classifyFailure(it, started) }
+            try {
+                runCatching { probeOnce(endpoint, timeoutSec) }
+                    .recoverCatching { probeOnce(endpoint, timeoutSec) }
+                    .getOrElse { classifyFailure(it, started) }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            }
         }
         val total = internals.httpMs ?: internals.connectMs ?: internals.dnsMs
         val status = when {
@@ -48,7 +55,7 @@ class OkHttpSiteProbe @Inject constructor(
         )
     }
 
-    private fun probeOnce(endpoint: SiteEndpoint, timeoutSec: Int): ProbeInternals {
+    private suspend fun probeOnce(endpoint: SiteEndpoint, timeoutSec: Int): ProbeInternals {
         val timeoutMs = timeoutSec.coerceIn(2, 8) * 1000L
         val dnsStart = System.nanoTime()
         val addresses = try {
@@ -78,23 +85,32 @@ class OkHttpSiteProbe @Inject constructor(
         return get.copy(dnsMs = dnsMs, ip = ip ?: get.ip)
     }
 
-    private fun execute(client: OkHttpClient, url: String, method: String): ProbeInternals {
+    private suspend fun execute(client: OkHttpClient, url: String, method: String): ProbeInternals {
         val request = Request.Builder()
             .url(url)
             .header("User-Agent", USER_AGENT)
-            .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            .header("Accept", "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8")
             .method(method, null)
             .build()
         val start = System.nanoTime()
         return try {
-            client.newCall(request).execute().use { response ->
+            val call = client.newCall(request)
+            val response = suspendCancellableCoroutine { cont ->
+                cont.invokeOnCancellation { call.cancel() }
+                try {
+                    cont.resume(call.execute())
+                } catch (t: Throwable) {
+                    if (cont.isActive) cont.resumeWith(Result.failure(t))
+                }
+            }
+            response.use { body ->
                 if (method == "GET") {
-                    response.body?.source()?.let { source ->
+                    body.body?.source()?.let { source ->
                         source.request(MAX_BODY)
                         source.buffer.clone().readByteArray()
                     }
                 }
-                val code = response.code
+                val code = body.code
                 val httpMs = elapsedMs(start)
                 val ok = code in 200..399
                 ProbeInternals(
@@ -107,6 +123,8 @@ class OkHttpSiteProbe @Inject constructor(
                     note = if (ok) null else "HTTP $code",
                 )
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (t: Throwable) {
             classifyFailure(t, start)
         }
@@ -123,6 +141,7 @@ class OkHttpSiteProbe @Inject constructor(
             else -> {
                 val message = error.message.orEmpty().lowercase()
                 when {
+                    "canceled" in message || "cancelled" in message -> ProbeStatus.UNAVAILABLE
                     "reset" in message || "connection refused" in message -> ProbeStatus.RESET
                     "timeout" in message || "timed out" in message -> ProbeStatus.TIMEOUT
                     "unable to resolve" in message || "unknown host" in message -> ProbeStatus.DNS_ERROR

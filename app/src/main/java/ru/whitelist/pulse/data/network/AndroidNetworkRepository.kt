@@ -5,6 +5,9 @@ import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.net.wifi.WifiManager
+import android.os.Build
+import android.telephony.SubscriptionManager
 import android.telephony.TelephonyManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -16,8 +19,10 @@ import kotlinx.coroutines.withContext
 import ru.whitelist.pulse.data.vpn.VpnDetector
 import ru.whitelist.pulse.domain.model.DnsLookupResult
 import ru.whitelist.pulse.domain.model.DnsServerInfo
+import ru.whitelist.pulse.domain.model.GeoInfo
 import ru.whitelist.pulse.domain.model.NetworkSnapshot
 import ru.whitelist.pulse.domain.model.TransportKind
+import ru.whitelist.pulse.domain.model.VpnPresence
 import ru.whitelist.pulse.domain.repository.GeoRepository
 import ru.whitelist.pulse.domain.repository.NetworkRepository
 import java.net.InetAddress
@@ -30,6 +35,9 @@ class AndroidNetworkRepository @Inject constructor(
     private val vpnDetector: VpnDetector,
     private val geoRepository: GeoRepository,
 ) : NetworkRepository {
+
+    @Volatile
+    private var cachedGeo: GeoInfo? = null
 
     override fun observeSnapshot(): Flow<NetworkSnapshot> = callbackFlow {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -46,13 +54,13 @@ class AndroidNetworkRepository @Inject constructor(
                 trySend(snapshotBlocking(withGeo = false))
             }
         }
-        cm.registerNetworkCallback(NetworkRequest.Builder().build(), callback)
+        runCatching { cm.registerNetworkCallback(NetworkRequest.Builder().build(), callback) }
         trySend(snapshotBlocking(withGeo = false))
         awaitClose { runCatching { cm.unregisterNetworkCallback(callback) } }
     }.distinctUntilChanged()
 
     override suspend fun currentSnapshot(): NetworkSnapshot = withContext(Dispatchers.IO) {
-        snapshotBlocking()
+        snapshotBlocking(withGeo = true)
     }
 
     override suspend fun lookupDns(hosts: List<String>): List<DnsLookupResult> = withContext(Dispatchers.IO) {
@@ -73,7 +81,7 @@ class AndroidNetworkRepository @Inject constructor(
         }
     }
 
-    private fun snapshotBlocking(withGeo: Boolean = true): NetworkSnapshot {
+    private fun snapshotBlocking(withGeo: Boolean): NetworkSnapshot {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val tm = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
         val network = cm.activeNetwork
@@ -91,21 +99,25 @@ class AndroidNetworkRepository @Inject constructor(
             caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) -> TransportKind.VPN
             else -> TransportKind.UNKNOWN
         }
-        val vpn = kotlinx.coroutines.runBlocking { vpnDetector.detect() }
+        val vpn = runCatching {
+            kotlinx.coroutines.runBlocking { vpnDetector.detect() }
+        }.getOrElse { VpnPresence(false, emptyList(), null, emptyList()) }
         val geo = if (withGeo) {
-            kotlinx.coroutines.runBlocking { runCatching { geoRepository.lookup() }.getOrNull() }
+            runCatching {
+                kotlinx.coroutines.runBlocking { geoRepository.lookup() }
+            }.getOrNull()?.also { cachedGeo = it }
         } else {
-            null
+            cachedGeo
         }
         return NetworkSnapshot(
             transport = transport,
             hasValidatedInternet = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true,
             metered = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) == false,
             captivePortal = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_CAPTIVE_PORTAL) == true,
-            ssid = null,
+            ssid = wifiSsid(caps),
             operatorName = runCatching { tm?.networkOperatorName }.getOrNull()?.takeIf { !it.isNullOrBlank() },
-            simCountryIso = runCatching { tm?.simCountryIso }.getOrNull()?.uppercase(),
-            networkCountryIso = runCatching { tm?.networkCountryIso }.getOrNull()?.uppercase(),
+            simCountryIso = simCountry(tm),
+            networkCountryIso = runCatching { tm?.networkCountryIso }.getOrNull()?.uppercase()?.ifBlank { null },
             dns = DnsServerInfo(
                 servers = lp?.dnsServers?.mapNotNull { it.hostAddress }.orEmpty(),
                 privateDns = lp?.privateDnsServerName,
@@ -114,5 +126,27 @@ class AndroidNetworkRepository @Inject constructor(
             geo = geo,
             timestampEpochMs = System.currentTimeMillis(),
         )
+    }
+
+    private fun simCountry(tm: TelephonyManager?): String? {
+        runCatching {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val sm = context.getSystemService(SubscriptionManager::class.java)
+                sm?.activeSubscriptionInfoList?.firstOrNull { !it.countryIso.isNullOrBlank() }
+                    ?.countryIso
+                    ?.uppercase()
+                    ?.let { return it }
+            }
+        }
+        return runCatching { tm?.simCountryIso }.getOrNull()?.uppercase()?.ifBlank { null }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun wifiSsid(caps: NetworkCapabilities?): String? {
+        if (caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) != true) return null
+        val wm = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager ?: return null
+        val raw = runCatching { wm.connectionInfo?.ssid }.getOrNull() ?: return null
+        val ssid = raw.trim('"')
+        return ssid.takeIf { it.isNotBlank() && it != "<unknown ssid>" && it != "0x" }
     }
 }

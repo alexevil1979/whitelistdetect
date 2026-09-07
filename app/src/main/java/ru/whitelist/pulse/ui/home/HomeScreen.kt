@@ -18,9 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -30,10 +28,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -45,10 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.whitelist.pulse.R
 import ru.whitelist.pulse.domain.model.ComparisonDelta
-import ru.whitelist.pulse.domain.model.GroupStats
 import ru.whitelist.pulse.domain.model.SiteGroup
-import ru.whitelist.pulse.domain.model.TransportKind
-import ru.whitelist.pulse.domain.model.Verdict
 import ru.whitelist.pulse.domain.model.VerdictKind
 import ru.whitelist.pulse.ui.ProbeUiState
 import ru.whitelist.pulse.ui.components.ConnectionPulse
@@ -69,6 +67,13 @@ fun HomeScreen(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val kind = state.verdict?.kind ?: VerdictKind.IDLE
+    var wasScanning by remember { mutableStateOf(false) }
+    LaunchedEffect(state.scanning) {
+        if (wasScanning && !state.scanning) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+        wasScanning = state.scanning
+    }
     PullToRefreshBox(
         isRefreshing = state.scanning,
         onRefresh = {
@@ -95,7 +100,7 @@ fun HomeScreen(
             VerdictHero(
                 kind = kind,
                 scanning = state.scanning,
-                subtitle = buildSubtitle(state),
+                subtitle = buildSubtitle(context, state),
                 hint = stringResource((state.verdict?.kind ?: VerdictKind.PARTIAL).hintRes()),
                 vpnDistorts = state.verdict?.vpnDistorts == true,
             )
@@ -252,7 +257,12 @@ private fun GroupRings(state: ProbeUiState) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         groups.forEach { group ->
             val stats = state.verdict?.groupStats?.find { it.group == group }
-            val progress = stats?.rate ?: 0f
+            val live = state.progress.groupCompleted[group]
+            val progress = if (state.scanning && live != null && live.second > 0) {
+                live.first.toFloat() / live.second.toFloat()
+            } else {
+                stats?.rate ?: 0f
+            }
             PulseCard(modifier = Modifier.weight(1f)) {
                 Column(
                     modifier = Modifier.padding(14.dp),
@@ -294,12 +304,12 @@ private fun CompactWhitelist(state: ProbeUiState) {
     }
 }
 
-private fun buildSubtitle(state: ProbeUiState): String {
+private fun buildSubtitle(context: android.content.Context, state: ProbeUiState): String {
     val snapshot = state.snapshot ?: return ""
     val parts = buildList {
         snapshot.operatorName?.let { add(it) }
         snapshot.ssid?.let { add(it) }
-        add(snapshot.transport.name)
+        add(context.getString(snapshot.transport.labelRes()))
         snapshot.geo?.ipv4?.let { add(it) }
         snapshot.geo?.countryName?.let { add(it) } ?: snapshot.geo?.countryCode?.let { add(it) }
         snapshot.geo?.city?.let { add(it) }

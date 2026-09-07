@@ -1,5 +1,8 @@
 package ru.whitelist.pulse.ui
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -9,7 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import ru.whitelist.pulse.data.local.AssetEndpointRepository
 import ru.whitelist.pulse.data.local.datastore.SettingsDataStore
 import ru.whitelist.pulse.domain.model.CheckHistoryEntry
 import ru.whitelist.pulse.domain.model.ComparisonDelta
@@ -23,12 +25,14 @@ import ru.whitelist.pulse.domain.model.SiteGroup
 import ru.whitelist.pulse.domain.model.Verdict
 import ru.whitelist.pulse.domain.model.VerdictKind
 import ru.whitelist.pulse.domain.repository.CustomSiteRepository
+import ru.whitelist.pulse.domain.repository.EndpointRepository
 import ru.whitelist.pulse.domain.repository.HistoryRepository
 import ru.whitelist.pulse.domain.repository.NetworkRepository
+import ru.whitelist.pulse.domain.repository.ProbeRepository
 import ru.whitelist.pulse.domain.usecase.ComputeVerdict
+import ru.whitelist.pulse.domain.usecase.LookupGeoIp
+import ru.whitelist.pulse.domain.usecase.ObserveNetworkSnapshot
 import ru.whitelist.pulse.domain.usecase.RunSiteGroupChecks
-import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
 import ru.whitelist.pulse.widget.VerdictWidget
 import java.util.UUID
 import javax.inject.Inject
@@ -55,21 +59,40 @@ class ProbeCoordinator @Inject constructor(
     @ApplicationContext private val context: Context,
     private val runChecks: RunSiteGroupChecks,
     private val computeVerdict: ComputeVerdict,
+    private val observeNetworkSnapshot: ObserveNetworkSnapshot,
+    private val lookupGeoIp: LookupGeoIp,
     private val networkRepository: NetworkRepository,
-    private val endpointRepository: AssetEndpointRepository,
+    private val endpointRepository: EndpointRepository,
     private val customSiteRepository: CustomSiteRepository,
     private val historyRepository: HistoryRepository,
+    private val probeRepository: ProbeRepository,
     private val settingsStore: SettingsDataStore,
 ) {
     private val _state = MutableStateFlow(ProbeUiState())
     val state: StateFlow<ProbeUiState> = _state.asStateFlow()
     private var intervalJob: Job? = null
+    private var probeJob: Job? = null
+    private var started = false
 
     fun start(scope: CoroutineScope) {
+        if (started) return
+        started = true
+        scope.launch {
+            probeRepository.progress.collect { progress ->
+                _state.update { it.copy(progress = progress) }
+            }
+        }
+        scope.launch {
+            probeRepository.lastResults.collect { results ->
+                if (results.isNotEmpty()) {
+                    _state.update { it.copy(results = mergeResults(it.results, results)) }
+                }
+            }
+        }
         scope.launch {
             combine(
                 settingsStore.settings,
-                networkRepository.observeSnapshot(),
+                observeNetworkSnapshot(),
                 endpointRepository.observeEndpoints(),
                 customSiteRepository.observe(),
                 historyRepository.observe(20),
@@ -77,13 +100,20 @@ class ProbeCoordinator @Inject constructor(
                 _state.update {
                     it.copy(
                         settings = settings,
-                        snapshot = snapshot,
+                        snapshot = snapshot.copy(geo = snapshot.geo ?: it.snapshot?.geo),
                         endpoints = endpoints,
                         customSites = custom,
                         history = history,
                     )
                 }
             }.collect { }
+        }
+        scope.launch {
+            runCatching { lookupGeoIp() }.getOrNull()?.let { geo ->
+                _state.update { st ->
+                    st.copy(snapshot = st.snapshot?.copy(geo = geo) ?: st.snapshot)
+                }
+            }
         }
         scope.launch {
             settingsStore.settings.collect { settings ->
@@ -102,13 +132,20 @@ class ProbeCoordinator @Inject constructor(
 
     fun run(scope: CoroutineScope, groups: Set<SiteGroup>? = null) {
         if (_state.value.scanning) return
-        scope.launch {
-            _state.update { it.copy(scanning = true, error = null, verdict = it.verdict?.copy(kind = VerdictKind.SCANNING) ?: idleVerdict()) }
-            runCatching {
+        probeJob?.cancel()
+        probeJob = scope.launch {
+            _state.update {
+                it.copy(
+                    scanning = true,
+                    error = null,
+                    verdict = it.verdict?.copy(kind = VerdictKind.SCANNING) ?: idleVerdict(),
+                )
+            }
+            try {
                 val snapshot = networkRepository.currentSnapshot()
                 val settings = settingsStore.current()
-                val all = endpointRepository.endpoints() + customSiteRepository.observe().let { _state.value.customSites }
-                val results = runChecks(all.ifEmpty { endpointRepository.endpoints() + _state.value.customSites }, settings, groups)
+                val all = endpointRepository.endpoints() + _state.value.customSites
+                val results = runChecks(all, settings, groups)
                 val vpnActive = snapshot.vpn.isActive
                 val verdict = computeVerdict.fromResults(
                     results = results,
@@ -117,10 +154,7 @@ class ProbeCoordinator @Inject constructor(
                     includeRegular = settings.includeRegular && !settings.whitelistOnlyMode,
                     includeRestricted = settings.includeRestricted && !settings.whitelistOnlyMode,
                 )
-                val dnsHosts = endpointRepository.dnsControls().ifEmpty {
-                    listOf("ya.ru", "gosuslugi.ru", "youtube.com", "instagram.com")
-                }
-                val dns = networkRepository.lookupDns(dnsHosts)
+                val dns = networkRepository.lookupDns(endpointRepository.dnsControls())
                 val previous = historyRepository.latest(1).firstOrNull()
                 val comparison = compare(previous, verdict)
                 val entry = CheckHistoryEntry(
@@ -141,7 +175,7 @@ class ProbeCoordinator @Inject constructor(
                 runCatching { VerdictWidget.push(context, verdict.kind, vpnActive) }
                 _state.update {
                     it.copy(
-                        snapshot = snapshot,
+                        snapshot = snapshot.copy(geo = snapshot.geo ?: it.snapshot?.geo),
                         results = mergeResults(it.results, results),
                         verdict = verdict,
                         scanning = false,
@@ -150,10 +184,18 @@ class ProbeCoordinator @Inject constructor(
                         dnsLookups = dns,
                     )
                 }
-            }.onFailure { error ->
+            } catch (cancelled: CancellationException) {
+                _state.update { it.copy(scanning = false) }
+                throw cancelled
+            } catch (error: Throwable) {
                 _state.update { it.copy(scanning = false, error = error.message) }
             }
         }
+    }
+
+    fun cancelProbe() {
+        probeJob?.cancel()
+        _state.update { it.copy(scanning = false) }
     }
 
     private fun mergeResults(old: List<SiteCheckResult>, incoming: List<SiteCheckResult>): List<SiteCheckResult> {

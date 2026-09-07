@@ -35,6 +35,7 @@ fun SettingsScreen(
     onClearHistory: () -> Unit,
     onExport: () -> Unit,
     onPickLists: () -> Unit,
+    onRequestNotificationPermission: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -86,6 +87,7 @@ fun SettingsScreen(
                 onChange(settings.copy(whitelistOnlyMode = it))
             }
             SwitchRow(stringResource(R.string.settings_notify), settings.notifyOnResult) {
+                if (it) onRequestNotificationPermission()
                 onChange(settings.copy(notifyOnResult = it))
             }
             Text(stringResource(R.string.settings_interval), style = MaterialTheme.typography.titleMedium)

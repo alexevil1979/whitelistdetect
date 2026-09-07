@@ -1,9 +1,12 @@
 package ru.whitelist.pulse.ui.navigation
 
+import android.Manifest
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,6 +18,8 @@ import androidx.compose.material.icons.outlined.WifiTethering
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -22,8 +27,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -43,11 +52,11 @@ import ru.whitelist.pulse.ui.home.HomeScreen
 import ru.whitelist.pulse.ui.network.NetworkScreen
 import ru.whitelist.pulse.ui.settings.SettingsScreen
 
-private enum class Dest(val route: String, val label: Int) {
-    Home("home", R.string.nav_home),
-    Checks("checks", R.string.nav_checks),
-    Network("network", R.string.nav_network),
-    Settings("settings", R.string.nav_settings),
+private enum class Dest(val route: String, val label: Int, val icon: ImageVector) {
+    Home("home", R.string.nav_home, Icons.Outlined.Home),
+    Checks("checks", R.string.nav_checks, Icons.Outlined.TravelExplore),
+    Network("network", R.string.nav_network, Icons.Outlined.WifiTethering),
+    Settings("settings", R.string.nav_settings, Icons.Outlined.Settings),
 }
 
 @Composable
@@ -59,6 +68,7 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
     val backStack by navController.currentBackStackEntryAsState()
     val current = backStack?.destination?.route ?: Dest.Home.route
     val isTablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 700
+    var tabletSide by rememberSaveable { mutableStateOf(Dest.Checks.route) }
 
     LaunchedEffect(Unit) {
         viewModel.bootstrap()
@@ -67,6 +77,9 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
     val pickLists = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let { viewModel.importBundledLists(it) }
     }
+    val notifyPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { }
 
     val content: @Composable (Dest) -> Unit = { dest ->
         when (dest) {
@@ -105,7 +118,20 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
                     }
                 },
                 onPickLists = { pickLists.launch(arrayOf("application/json", "text/plain")) },
+                onRequestNotificationPermission = {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    }
+                },
             )
+        }
+    }
+
+    fun navigate(dest: Dest) {
+        navController.navigate(dest.route) {
+            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
         }
     }
 
@@ -117,23 +143,9 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
                     Dest.entries.forEach { dest ->
                         NavigationBarItem(
                             selected = current == dest.route,
-                            onClick = {
-                                navController.navigate(dest.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
+                            onClick = { navigate(dest) },
                             icon = {
-                                Icon(
-                                    imageVector = when (dest) {
-                                        Dest.Home -> Icons.Outlined.Home
-                                        Dest.Checks -> Icons.Outlined.TravelExplore
-                                        Dest.Network -> Icons.Outlined.WifiTethering
-                                        Dest.Settings -> Icons.Outlined.Settings
-                                    },
-                                    contentDescription = stringResource(dest.label),
-                                )
+                                Icon(dest.icon, contentDescription = stringResource(dest.label))
                             },
                             label = { Text(stringResource(dest.label)) },
                         )
@@ -146,12 +158,23 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(12.dp),
+                    .padding(padding),
             ) {
-                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) { content(Dest.Home) }
-                androidx.compose.foundation.layout.Box(Modifier.weight(1f)) {
-                    val side = Dest.entries.find { it.route == current && it != Dest.Home } ?: Dest.Checks
+                NavigationRail {
+                    Dest.entries.forEach { dest ->
+                        NavigationRailItem(
+                            selected = tabletSide == dest.route,
+                            onClick = {
+                                tabletSide = if (dest == Dest.Home) Dest.Checks.route else dest.route
+                            },
+                            icon = { Icon(dest.icon, contentDescription = stringResource(dest.label)) },
+                            label = { Text(stringResource(dest.label)) },
+                        )
+                    }
+                }
+                Box(Modifier.weight(1f).padding(12.dp)) { content(Dest.Home) }
+                Box(Modifier.weight(1f).padding(12.dp)) {
+                    val side = Dest.entries.find { it.route == tabletSide && it != Dest.Home } ?: Dest.Checks
                     content(side)
                 }
             }

@@ -38,8 +38,11 @@ class GeoIpDataSource @Inject constructor(
     }
 
     private fun fetch(): GeoInfo {
-        val ipify = getText("https://api.ipify.org?format=json")
+        val ipv4 = getText("https://api.ipify.org?format=json")
             ?.let { json.parseToJsonElement(it).jsonObject.string("ip") }
+        val ipv6 = getText("https://api6.ipify.org?format=json")
+            ?.let { json.parseToJsonElement(it).jsonObject.string("ip") }
+            ?.takeIf { it.contains(':') }
         val providers = listOf(
             "https://ipapi.co/json/" to ::fromIpApi,
             "https://ipinfo.io/json" to ::fromIpInfo,
@@ -47,11 +50,11 @@ class GeoIpDataSource @Inject constructor(
         )
         for ((url, parser) in providers) {
             val body = getText(url) ?: continue
-            runCatching { parser(json.parseToJsonElement(body).jsonObject, ipify) }
+            runCatching { parser(json.parseToJsonElement(body).jsonObject, ipv4).copy(ipv6 = ipv6) }
                 .onSuccess { return it }
                 .onFailure { Timber.w(it, "GeoIP parse failed for %s", url) }
         }
-        return GeoInfo(ipify, null, null, null, null, null, null, null, "ipify")
+        return GeoInfo(ipv4, ipv6, null, null, null, null, null, null, "ipify")
     }
 
     private fun fromIpApi(obj: JsonObject, fallbackIp: String?): GeoInfo = GeoInfo(
