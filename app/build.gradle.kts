@@ -109,7 +109,7 @@ dependencies {
 
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
-    implementation("androidx.glance:glance:1.1.1")
+    implementation(libs.glance)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

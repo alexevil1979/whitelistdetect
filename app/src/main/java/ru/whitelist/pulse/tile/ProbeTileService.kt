@@ -11,6 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import ru.whitelist.pulse.R
 import ru.whitelist.pulse.notify.ProbeNotifier
 import ru.whitelist.pulse.ui.ProbeCoordinator
@@ -43,11 +44,15 @@ class ProbeTileService : TileService() {
         coordinator.start(scope)
         qsTile?.state = Tile.STATE_ACTIVE
         qsTile?.updateTile()
+        val startedAt = coordinator.state.value.lastCheckedAt
         coordinator.run(scope)
         scope.launch {
-            kotlinx.coroutines.delay(400)
-            val state = coordinator.state.first { !it.scanning && it.verdict != null }
-            val title = getString(state.verdict!!.kind.titleRes())
+            val state = withTimeoutOrNull(45_000) {
+                coordinator.state.first { current ->
+                    !current.scanning && current.verdict != null && current.lastCheckedAt != startedAt
+                }
+            } ?: coordinator.state.value
+            val title = getString((state.verdict?.kind ?: ru.whitelist.pulse.domain.model.VerdictKind.PARTIAL).titleRes())
             Toast.makeText(applicationContext, title, Toast.LENGTH_LONG).show()
             ProbeNotifier.notify(applicationContext, title)
             qsTile?.apply {

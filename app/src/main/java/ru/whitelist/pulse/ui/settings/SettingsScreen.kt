@@ -35,6 +35,7 @@ fun SettingsScreen(
     onClearHistory: () -> Unit,
     onExport: () -> Unit,
     onPickLists: () -> Unit,
+    onImportCustomFile: () -> Unit = {},
     onRequestNotificationPermission: () -> Unit = {},
 ) {
     Column(
@@ -134,6 +135,7 @@ fun SettingsScreen(
         }
         CardBlock(stringResource(R.string.settings_custom)) {
             OutlinedButton(onClick = onExport) { Text(stringResource(R.string.action_export)) }
+            OutlinedButton(onClick = onImportCustomFile) { Text(stringResource(R.string.action_import_custom)) }
             OutlinedButton(onClick = onClearHistory) { Text(stringResource(R.string.action_clear_history)) }
             OutlinedButton(onClick = onPickLists) { Text(stringResource(R.string.settings_update_lists)) }
             Text(stringResource(R.string.lists_unofficial_note), style = MaterialTheme.typography.bodyMedium)

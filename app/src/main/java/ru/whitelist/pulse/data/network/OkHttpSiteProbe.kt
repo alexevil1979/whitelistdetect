@@ -9,6 +9,7 @@ import okhttp3.Request
 import ru.whitelist.pulse.domain.model.ProbeStatus
 import ru.whitelist.pulse.domain.model.SiteCheckResult
 import ru.whitelist.pulse.domain.model.SiteEndpoint
+import ru.whitelist.pulse.domain.usecase.BlockPageClassifier
 import timber.log.Timber
 import java.net.InetAddress
 import java.net.SocketTimeoutException
@@ -103,24 +104,35 @@ class OkHttpSiteProbe @Inject constructor(
                     if (cont.isActive) cont.resumeWith(Result.failure(t))
                 }
             }
-            response.use { body ->
-                if (method == "GET") {
-                    body.body?.source()?.let { source ->
+            response.use { http ->
+                val snippet = if (method == "GET") {
+                    http.body?.source()?.let { source ->
                         source.request(MAX_BODY)
-                        source.buffer.clone().readByteArray()
+                        runCatching { source.buffer.clone().readUtf8() }.getOrNull()
                     }
+                } else {
+                    null
                 }
-                val code = body.code
+                val code = http.code
                 val httpMs = elapsedMs(start)
-                val ok = code in 200..399
+                val blocked = BlockPageClassifier.isBlockPage(snippet, code)
+                val ok = code in 200..399 && !blocked
                 ProbeInternals(
                     dnsMs = null,
                     connectMs = null,
                     httpMs = httpMs,
-                    status = if (ok) ProbeStatus.AVAILABLE else ProbeStatus.HTTP_ERROR,
+                    status = when {
+                        blocked -> ProbeStatus.UNAVAILABLE
+                        ok -> ProbeStatus.AVAILABLE
+                        else -> ProbeStatus.HTTP_ERROR
+                    },
                     ip = null,
                     code = code,
-                    note = if (ok) null else "HTTP $code",
+                    note = when {
+                        blocked -> "block-page"
+                        ok -> null
+                        else -> "HTTP $code"
+                    },
                 )
             }
         } catch (cancelled: CancellationException) {

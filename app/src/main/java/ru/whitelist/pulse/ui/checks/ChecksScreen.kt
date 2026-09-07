@@ -41,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -74,6 +73,7 @@ fun ChecksScreen(
     onToggleSite: (SiteEndpoint) -> Unit,
     onDeleteSite: (String) -> Unit,
     onImport: (String) -> Unit,
+    onImportFile: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var tab by remember { mutableIntStateOf(0) }
@@ -132,15 +132,30 @@ fun ChecksScreen(
             }
         }
         if (currentGroup == SiteGroup.CUSTOM) {
-            CustomEditor(onAddSite, onImport)
+            CustomEditor(onAddSite, onImport, onImportFile)
         }
         if (filtered.isEmpty()) {
             PulseCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(if (currentGroup == SiteGroup.CUSTOM) R.string.empty_custom_title else R.string.error_generic), style = MaterialTheme.typography.titleLarge)
-                    if (currentGroup == SiteGroup.CUSTOM) {
-                        Text(stringResource(R.string.empty_custom_body))
-                    }
+                    val isFilter = query.isNotBlank() || preset != null
+                    Text(
+                        text = stringResource(
+                            when {
+                                currentGroup == SiteGroup.CUSTOM && !isFilter -> R.string.empty_custom_title
+                                isFilter -> R.string.empty_filter_title
+                                else -> R.string.empty_filter_title
+                            },
+                        ),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    Text(
+                        stringResource(
+                            when {
+                                currentGroup == SiteGroup.CUSTOM && !isFilter -> R.string.empty_custom_body
+                                else -> R.string.empty_filter_body
+                            },
+                        ),
+                    )
                 }
             }
         } else {
@@ -150,7 +165,8 @@ fun ChecksScreen(
                     SiteRow(
                         site = site,
                         result = result,
-                        statusText = result?.status?.label(context, result.httpCode) ?: context.getString(R.string.status_idle),
+                        statusText = result?.status?.label(context, result.httpCode, result.errorNote)
+                            ?: context.getString(R.string.status_idle),
                         isCustom = currentGroup == SiteGroup.CUSTOM,
                         onToggle = { onToggleSite(site.copy(enabled = !site.enabled)) },
                         onDelete = { onDeleteSite(site.id) },
@@ -166,6 +182,7 @@ fun ChecksScreen(
 private fun CustomEditor(
     onAddSite: (String, String) -> Unit,
     onImport: (String) -> Unit,
+    onImportFile: () -> Unit,
 ) {
     var host by remember { mutableStateOf("") }
     var tag by remember { mutableStateOf("") }
@@ -187,6 +204,7 @@ private fun CustomEditor(
                     .height(120.dp),
             )
             OutlinedButton(onClick = { onImport(bulk); bulk = "" }) { Text(stringResource(R.string.action_import)) }
+            OutlinedButton(onClick = onImportFile) { Text(stringResource(R.string.import_from_file)) }
         }
     }
 }
@@ -214,6 +232,10 @@ private fun SiteRow(
                         append(statusText)
                         result?.latencyMs?.let { append(" · ${it} ms") }
                         result?.resolvedIp?.let { append(" · $it") }
+                        result?.checkedAtEpochMs?.let {
+                            append(" · ")
+                            append(java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(it)))
+                        }
                         append(" · ")
                     } + stringResource(site.group.noteRes()),
                     style = MaterialTheme.typography.bodyMedium,

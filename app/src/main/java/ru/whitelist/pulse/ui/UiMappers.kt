@@ -45,16 +45,18 @@ fun SiteGroup.noteRes(): Int = when (this) {
     SiteGroup.CUSTOM -> R.string.note_custom
 }
 
-fun ProbeStatus.label(context: Context, httpCode: Int?): String = when (this) {
-    ProbeStatus.AVAILABLE -> context.getString(R.string.status_available)
-    ProbeStatus.UNAVAILABLE -> context.getString(R.string.status_unavailable)
-    ProbeStatus.SLOW -> context.getString(R.string.status_slow)
-    ProbeStatus.DNS_ERROR -> context.getString(R.string.status_dns)
-    ProbeStatus.TIMEOUT -> context.getString(R.string.status_timeout)
-    ProbeStatus.HTTP_ERROR -> context.getString(R.string.status_http, httpCode ?: 0)
-    ProbeStatus.IDLE -> context.getString(R.string.status_idle)
-    ProbeStatus.CHECKING -> context.getString(R.string.status_checking)
-    ProbeStatus.TLS_ERROR, ProbeStatus.RESET -> context.getString(R.string.status_unavailable)
+fun ProbeStatus.label(context: Context, httpCode: Int?, note: String? = null): String = when {
+    this == ProbeStatus.UNAVAILABLE && note == "block-page" -> context.getString(R.string.status_block_page)
+    this == ProbeStatus.AVAILABLE -> context.getString(R.string.status_available)
+    this == ProbeStatus.UNAVAILABLE -> context.getString(R.string.status_unavailable)
+    this == ProbeStatus.SLOW -> context.getString(R.string.status_slow)
+    this == ProbeStatus.DNS_ERROR -> context.getString(R.string.status_dns)
+    this == ProbeStatus.TIMEOUT -> context.getString(R.string.status_timeout)
+    this == ProbeStatus.HTTP_ERROR -> context.getString(R.string.status_http, httpCode ?: 0)
+    this == ProbeStatus.IDLE -> context.getString(R.string.status_idle)
+    this == ProbeStatus.CHECKING -> context.getString(R.string.status_checking)
+    this == ProbeStatus.TLS_ERROR || this == ProbeStatus.RESET -> context.getString(R.string.status_unavailable)
+    else -> context.getString(R.string.status_unavailable)
 }
 
 fun TransportKind.labelRes(): Int = when (this) {

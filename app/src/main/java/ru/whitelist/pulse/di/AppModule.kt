@@ -13,6 +13,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import ru.whitelist.pulse.BuildConfig
 import ru.whitelist.pulse.data.geo.GeoIpDataSource
 import ru.whitelist.pulse.data.local.AppDatabase
 import ru.whitelist.pulse.data.local.AssetEndpointRepository
@@ -53,14 +55,21 @@ object AppProvidesModule {
 
     @Provides
     @Singleton
-    fun okHttp(): OkHttpClient = OkHttpClient.Builder()
-        .retryOnConnectionFailure(true)
-        .followRedirects(true)
-        .connectTimeout(4, TimeUnit.SECONDS)
-        .readTimeout(4, TimeUnit.SECONDS)
-        .writeTimeout(4, TimeUnit.SECONDS)
-        .callTimeout(5, TimeUnit.SECONDS)
-        .build()
+    fun okHttp(): OkHttpClient {
+        val builder = OkHttpClient.Builder()
+            .retryOnConnectionFailure(true)
+            .followRedirects(true)
+            .connectTimeout(4, TimeUnit.SECONDS)
+            .readTimeout(4, TimeUnit.SECONDS)
+            .writeTimeout(4, TimeUnit.SECONDS)
+            .callTimeout(5, TimeUnit.SECONDS)
+        if (BuildConfig.DEBUG) {
+            builder.addInterceptor(
+                HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC },
+            )
+        }
+        return builder.build()
+    }
 
     @Provides
     @Singleton

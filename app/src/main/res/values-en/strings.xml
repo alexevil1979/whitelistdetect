@@ -108,6 +108,14 @@
     <string name="offline_body">The device has no internet right now. Connect to Wi‑Fi or mobile data and tap Retry.</string>
     <string name="empty_custom_title">No custom sites yet</string>
     <string name="empty_custom_body">Add a domain manually or import a list — one domain per line.</string>
+    <string name="empty_filter_title">Nothing found</string>
+    <string name="empty_filter_body">Clear the search or preset — this group does have sites.</string>
+    <string name="sites_imported">Added: %1$d, skipped: %2$d</string>
+    <string name="status_block_page">block page</string>
+    <string name="underlying_verdict">Ignoring VPN: %1$s</string>
+    <string name="import_from_file">Import from file</string>
+    <string name="action_import_custom">Import domains from a file</string>
+    <string name="mixed_groups">Mixed across groups: %1$s</string>
     <string name="empty_history_title">No history yet</string>
     <string name="empty_history_body">The last 20 results will appear here after the first check.</string>
     <string name="error_generic">The check could not be completed. Try again.</string>

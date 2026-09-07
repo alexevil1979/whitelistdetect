@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import ru.whitelist.pulse.R
 import ru.whitelist.pulse.domain.model.CheckHistoryEntry
 import ru.whitelist.pulse.domain.model.DnsLookupResult
-import ru.whitelist.pulse.domain.model.ProbeStatus
 import ru.whitelist.pulse.domain.model.SiteGroup
 import ru.whitelist.pulse.ui.ProbeUiState
 import ru.whitelist.pulse.ui.buildShareReport

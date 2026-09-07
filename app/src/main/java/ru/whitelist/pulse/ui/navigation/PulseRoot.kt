@@ -46,6 +46,7 @@ import androidx.navigation.compose.rememberNavController
 import ru.whitelist.pulse.R
 import ru.whitelist.pulse.notify.ProbeNotifier
 import ru.whitelist.pulse.ui.PulseViewModel
+import ru.whitelist.pulse.ui.UiEvent
 import ru.whitelist.pulse.ui.titleRes
 import ru.whitelist.pulse.ui.checks.ChecksScreen
 import ru.whitelist.pulse.ui.home.HomeScreen
@@ -77,6 +78,9 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
     val pickLists = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         uri?.let { viewModel.importBundledLists(it) }
     }
+    val pickDomains = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+        uri?.let { viewModel.importCustomFile(it) }
+    }
     val notifyPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { }
@@ -92,6 +96,7 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
                 onToggleSite = { viewModel.toggleSite(it) },
                 onDeleteSite = { viewModel.deleteSite(it) },
                 onImport = { viewModel.importSites(it) },
+                onImportFile = { pickDomains.launch(arrayOf("text/plain", "*/*")) },
             )
             Dest.Network -> NetworkScreen(
                 state = state,
@@ -118,6 +123,7 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
                     }
                 },
                 onPickLists = { pickLists.launch(arrayOf("application/json", "text/plain")) },
+                onImportCustomFile = { pickDomains.launch(arrayOf("text/plain", "*/*")) },
                 onRequestNotificationPermission = {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -191,6 +197,20 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
         }
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            val message = when (event) {
+                UiEvent.SiteAdded -> context.getString(R.string.site_added)
+                UiEvent.InvalidDomain -> context.getString(R.string.invalid_domain)
+                UiEvent.SiteRemoved -> context.getString(R.string.site_removed)
+                is UiEvent.SitesImported -> context.getString(R.string.sites_imported, event.accepted, event.rejected)
+                UiEvent.HistoryCleared -> context.getString(R.string.history_cleared)
+                UiEvent.ListsUpdated -> context.getString(R.string.lists_updated)
+                UiEvent.ListsFailed -> context.getString(R.string.lists_update_failed)
+            }
+            snackbar.showSnackbar(message)
+        }
+    }
     LaunchedEffect(state.error) {
         state.error?.let { snackbar.showSnackbar(it) }
     }

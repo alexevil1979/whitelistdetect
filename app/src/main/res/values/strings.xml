@@ -108,6 +108,14 @@
     <string name="offline_body">Устройство сейчас без интернета. Подключитесь к Wi‑Fi или мобильной сети и нажмите «Повторить».</string>
     <string name="empty_custom_title">Пока нет своих сайтов</string>
     <string name="empty_custom_body">Добавьте домен вручную или импортируйте список — по одному домену на строку.</string>
+    <string name="empty_filter_title">Ничего не найдено</string>
+    <string name="empty_filter_body">Сбросьте поиск или пресет — в этой группе сайты есть.</string>
+    <string name="sites_imported">Добавлено: %1$d, пропущено: %2$d</string>
+    <string name="status_block_page">блок-страница</string>
+    <string name="underlying_verdict">Без учёта VPN: %1$s</string>
+    <string name="import_from_file">Импорт из файла</string>
+    <string name="action_import_custom">Импорт доменов из файла</string>
+    <string name="mixed_groups">Смешанно по группам: %1$s</string>
     <string name="empty_history_title">Истории пока нет</string>
     <string name="empty_history_body">После первой проверки здесь появятся последние 20 результатов.</string>
     <string name="error_generic">Не получилось выполнить проверку. Попробуйте ещё раз.</string>

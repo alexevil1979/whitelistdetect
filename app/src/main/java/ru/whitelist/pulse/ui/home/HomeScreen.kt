@@ -30,9 +30,11 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -74,6 +76,13 @@ fun HomeScreen(
         }
         wasScanning = state.scanning
     }
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(state.lastCheckedAt) {
+        while (true) {
+            now = System.currentTimeMillis()
+            delay(1_000)
+        }
+    }
     PullToRefreshBox(
         isRefreshing = state.scanning,
         onRefresh = {
@@ -99,10 +108,12 @@ fun HomeScreen(
             }
             VerdictHero(
                 kind = kind,
+                underlyingKind = state.verdict?.underlyingKind,
                 scanning = state.scanning,
                 subtitle = buildSubtitle(context, state),
                 hint = stringResource((state.verdict?.kind ?: VerdictKind.PARTIAL).hintRes()),
                 vpnDistorts = state.verdict?.vpnDistorts == true,
+                mixedGroups = state.verdict?.reasons?.find { it.startsWith("mixed:") }?.removePrefix("mixed:"),
             )
             ChipRow(state)
             GroupRings(state)
@@ -121,7 +132,7 @@ fun HomeScreen(
                 Text(stringResource(if (state.scanning) R.string.verdict_scanning else R.string.action_check_now))
             }
             Text(
-                text = stringResource(R.string.last_updated, relativeTime(context, state.lastCheckedAt)),
+                text = stringResource(R.string.last_updated, relativeTime(context, state.lastCheckedAt, now)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -157,6 +168,8 @@ fun VerdictHero(
     subtitle: String,
     hint: String,
     vpnDistorts: Boolean,
+    underlyingKind: VerdictKind? = null,
+    mixedGroups: String? = null,
 ) {
     val shimmer = rememberInfiniteTransition(label = "shimmer")
     val shift by shimmer.animateFloat(
@@ -209,8 +222,21 @@ fun VerdictHero(
                         style = MaterialTheme.typography.labelLarge,
                         color = VerdictKind.VPN_ACTIVE.accent(),
                     )
+                    if (underlyingKind != null && underlyingKind != VerdictKind.VPN_ACTIVE && underlyingKind != VerdictKind.IDLE) {
+                        Text(
+                            text = stringResource(R.string.underlying_verdict, stringResource(underlyingKind.titleRes())),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
                 Text(text = hint, style = MaterialTheme.typography.bodyLarge)
+                if (!mixedGroups.isNullOrBlank()) {
+                    Text(
+                        text = stringResource(R.string.mixed_groups, mixedGroups),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -332,7 +358,20 @@ private fun VerdictHeroPreview() {
     }
 }
 
-@Preview(showBackground = true, name = "Normal verdict")
+@Preview(showBackground = true, name = "VPN verdict")
+@Composable
+private fun VpnHeroPreview() {
+    PulseTheme(darkTheme = false, dynamicColor = false) {
+        VerdictHero(
+            kind = VerdictKind.VPN_ACTIVE,
+            underlyingKind = VerdictKind.WHITELIST_MODE,
+            scanning = false,
+            subtitle = "CELLULAR · VPN",
+            hint = "Результаты могут быть искажены: активен VPN",
+            vpnDistorts = true,
+        )
+    }
+}
 @Composable
 private fun NormalHeroPreview() {
     PulseTheme(darkTheme = true, dynamicColor = false) {
