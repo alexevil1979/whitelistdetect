@@ -17,6 +17,7 @@ import ru.whitelist.pulse.domain.model.AppLanguage
 import ru.whitelist.pulse.domain.repository.SettingsRepository
 import ru.whitelist.pulse.monitor.MonitorController
 import ru.whitelist.pulse.notify.StatusIndicator
+import ru.whitelist.pulse.notify.WhitelistAlarmController
 import ru.whitelist.pulse.ui.ProbeCoordinator
 import timber.log.Timber
 import javax.inject.Inject
@@ -30,6 +31,9 @@ class PulseApplication : Application() {
     @Inject
     lateinit var coordinator: ProbeCoordinator
 
+    @Inject
+    lateinit var whitelistAlarm: WhitelistAlarmController
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onCreate() {
@@ -40,6 +44,7 @@ class PulseApplication : Application() {
         createNotificationChannel()
         StatusIndicator.ensureChannel(this)
         coordinator.start()
+        whitelistAlarm.start()
         scope.launch {
             settingsRepository.settings
                 .map { it.language }

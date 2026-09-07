@@ -193,6 +193,8 @@ data class ProbeSettings(
     val whitelistOnlyMode: Boolean = false,
     val notifyOnResult: Boolean = false,
     val backgroundMonitor: Boolean = true,
+    val whitelistAlarmEnabled: Boolean = false,
+    val whitelistAlarmMinutes: Int = 5,
 )
 
 data class ProbeProgress(

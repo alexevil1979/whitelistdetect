@@ -42,6 +42,8 @@ class SettingsDataStore @Inject constructor(
             prefs[WHITELIST_ONLY] = next.whitelistOnlyMode
             prefs[NOTIFY] = next.notifyOnResult
             prefs[BACKGROUND] = next.backgroundMonitor
+            prefs[WL_ALARM] = next.whitelistAlarmEnabled
+            prefs[WL_ALARM_MIN] = next.whitelistAlarmMinutes.coerceIn(1, 60)
         }
     }
 
@@ -73,6 +75,8 @@ class SettingsDataStore @Inject constructor(
         whitelistOnlyMode = this[WHITELIST_ONLY] ?: false,
         notifyOnResult = this[NOTIFY] ?: false,
         backgroundMonitor = this[BACKGROUND] ?: true,
+        whitelistAlarmEnabled = this[WL_ALARM] ?: false,
+        whitelistAlarmMinutes = this[WL_ALARM_MIN] ?: 5,
     )
 
     private companion object {
@@ -89,6 +93,8 @@ class SettingsDataStore @Inject constructor(
         val WHITELIST_ONLY = booleanPreferencesKey("whitelist_only")
         val NOTIFY = booleanPreferencesKey("notify")
         val BACKGROUND = booleanPreferencesKey("background_monitor")
+        val WL_ALARM = booleanPreferencesKey("whitelist_alarm")
+        val WL_ALARM_MIN = intPreferencesKey("whitelist_alarm_min")
         val LAST_VERDICT = stringPreferencesKey("last_verdict")
         val LAST_VPN = booleanPreferencesKey("last_vpn")
     }

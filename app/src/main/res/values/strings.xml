@@ -143,6 +143,10 @@
     <string name="settings_notify">Уведомлять о результате проверки</string>
     <string name="settings_status_icon">Значок в строке состояния</string>
     <string name="settings_status_icon_hint">Раз в минуту в фоне проверяет доступность. В строке состояния кружок: полный — обычный интернет, наполовину — ограничения или неоднозначно, пустой — сети нет.</string>
+    <string name="settings_whitelist_alarm">Звук при белом списке</string>
+    <string name="settings_whitelist_alarm_hint">Если проверка покажет режим белого списка — прозвучит сигнал и будет повторяться каждую минуту.</string>
+    <string name="settings_whitelist_alarm_minutes">Повторять, минут</string>
+    <string name="alarm_minutes">%1$d мин</string>
     <string name="notification_channel_status">Индикатор сети</string>
     <string name="status_indicator_subtitle">Фоновая проверка раз в минуту</string>
     <string name="interval_off">Выкл</string>

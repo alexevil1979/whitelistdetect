@@ -143,6 +143,10 @@
     <string name="settings_notify">Notify about check results</string>
     <string name="settings_status_icon">Status bar icon</string>
     <string name="settings_status_icon_hint">Every minute in the background, checks reachability. Status bar circle: full for regular internet, half-filled for restrictions or mixed results, empty for no network.</string>
+    <string name="settings_whitelist_alarm">Sound on allowlist mode</string>
+    <string name="settings_whitelist_alarm_hint">If a check finds allowlist mode, a sound plays and repeats every minute.</string>
+    <string name="settings_whitelist_alarm_minutes">Repeat for, minutes</string>
+    <string name="alarm_minutes">%1$d min</string>
     <string name="notification_channel_status">Network indicator</string>
     <string name="status_indicator_subtitle">Background check every minute</string>
     <string name="interval_off">Off</string>

@@ -35,6 +35,7 @@ import ru.whitelist.pulse.domain.usecase.ComputeVerdict
 import ru.whitelist.pulse.domain.usecase.LookupGeoIp
 import ru.whitelist.pulse.domain.usecase.ObserveNetworkSnapshot
 import ru.whitelist.pulse.domain.usecase.RunSiteGroupChecks
+import ru.whitelist.pulse.notify.WhitelistAlarmController
 import ru.whitelist.pulse.widget.VerdictWidget
 import java.util.UUID
 import javax.inject.Inject
@@ -73,6 +74,7 @@ class ProbeCoordinator @Inject constructor(
     private val historyRepository: HistoryRepository,
     private val probeRepository: ProbeRepository,
     private val settingsStore: SettingsDataStore,
+    private val whitelistAlarm: WhitelistAlarmController,
 ) {
     private val _state = MutableStateFlow(ProbeUiState())
     val state: StateFlow<ProbeUiState> = _state.asStateFlow()
@@ -199,6 +201,7 @@ class ProbeCoordinator @Inject constructor(
                 }
                 settingsStore.saveLastVerdict(verdict.kind, vpnActive)
                 runCatching { VerdictWidget.push(context, verdict.kind, vpnActive) }
+                whitelistAlarm.onVerdict(verdict.kind, settings)
                 if (generation != runGeneration) return@launch
                 _state.update {
                     it.copy(

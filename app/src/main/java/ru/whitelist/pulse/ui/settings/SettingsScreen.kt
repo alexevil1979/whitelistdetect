@@ -101,6 +101,26 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            SwitchRow(stringResource(R.string.settings_whitelist_alarm), settings.whitelistAlarmEnabled) {
+                onChange(settings.copy(whitelistAlarmEnabled = it))
+            }
+            if (settings.whitelistAlarmEnabled) {
+                Text(
+                    stringResource(R.string.settings_whitelist_alarm_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(stringResource(R.string.settings_whitelist_alarm_minutes), style = MaterialTheme.typography.titleMedium)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf(1, 3, 5, 10, 15, 30).forEach { minutes ->
+                        FilterChip(
+                            selected = settings.whitelistAlarmMinutes == minutes,
+                            onClick = { onChange(settings.copy(whitelistAlarmMinutes = minutes)) },
+                            label = { Text(stringResource(R.string.alarm_minutes, minutes)) },
+                        )
+                    }
+                }
+            }
             Text(stringResource(R.string.settings_interval), style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(0 to R.string.interval_off, 30 to R.string.interval_30s, 60 to R.string.interval_1m, 300 to R.string.interval_5m).forEach { (sec, res) ->
