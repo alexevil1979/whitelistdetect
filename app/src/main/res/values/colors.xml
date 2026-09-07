@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_bg">#0B1220</color>
+    <color name="pulse_emerald">#0F766E</color>
+    <color name="pulse_amber">#D97706</color>
+    <color name="pulse_gray">#64748B</color>
+    <color name="pulse_indigo">#4338CA</color>
+    <color name="pulse_violet">#7C3AED</color>
+    <color name="pulse_coral">#E11D48</color>
+    <color name="widget_bg">#F8FAFC</color>
+    <color name="widget_text">#0F172A</color>
+</resources>

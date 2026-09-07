@@ -1,0 +1,9 @@
+-keepattributes Signature, InnerClasses, EnclosingMethod, *Annotation*
+-keep class ru.whitelist.pulse.** { *; }
+-keep class dagger.hilt.** { *; }
+-keep class javax.inject.** { *; }
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn org.conscrypt.**
+-keep class timber.log.Timber { *; }
+-keep class androidx.glance.** { *; }

@@ -1,0 +1,68 @@
+{
+  "version": "2026.09",
+  "disclaimer": "Unofficial aggregation of publicly reachable services as of 2026. Not an official Ministry of Digital Development, operator, or Roskomnadzor list. May become outdated.",
+  "groups": [
+    {
+      "id": "whitelist",
+      "label_ru": "Белый список",
+      "label_en": "Allowlist",
+      "endpoints": [
+        { "id": "gosuslugi", "host": "www.gosuslugi.ru", "url": "https://www.gosuslugi.ru", "tags": ["gosuslugi", "gov"] },
+        { "id": "yandex", "host": "yandex.ru", "url": "https://yandex.ru", "tags": ["media"] },
+        { "id": "vk", "host": "vk.com", "url": "https://vk.com", "tags": ["media"] },
+        { "id": "ok", "host": "ok.ru", "url": "https://ok.ru", "tags": ["media"] },
+        { "id": "mailru", "host": "mail.ru", "url": "https://mail.ru", "tags": ["media"] },
+        { "id": "max", "host": "max.ru", "url": "https://max.ru", "tags": ["media"] },
+        { "id": "ozon", "host": "www.ozon.ru", "url": "https://www.ozon.ru", "tags": ["marketplaces"] },
+        { "id": "wildberries", "host": "www.wildberries.ru", "url": "https://www.wildberries.ru", "tags": ["marketplaces"] },
+        { "id": "avito", "host": "www.avito.ru", "url": "https://www.avito.ru", "tags": ["marketplaces"] },
+        { "id": "dzen", "host": "dzen.ru", "url": "https://dzen.ru", "tags": ["media"] },
+        { "id": "rutube", "host": "rutube.ru", "url": "https://rutube.ru", "tags": ["media"] },
+        { "id": "sberbank", "host": "sberbank.ru", "url": "https://sberbank.ru", "tags": ["banks"] },
+        { "id": "mosru", "host": "www.mos.ru", "url": "https://www.mos.ru", "tags": ["gosuslugi", "gov"] },
+        { "id": "digitalgov", "host": "digital.gov.ru", "url": "https://digital.gov.ru", "tags": ["gosuslugi", "gov"] },
+        { "id": "rzd", "host": "www.rzd.ru", "url": "https://www.rzd.ru", "tags": ["gov"] }
+      ]
+    },
+    {
+      "id": "regular",
+      "label_ru": "Обычный интернет",
+      "label_en": "Regular internet",
+      "endpoints": [
+        { "id": "habr", "host": "habr.com", "url": "https://habr.com", "tags": ["media"] },
+        { "id": "github", "host": "github.com", "url": "https://github.com", "tags": ["foreign"] },
+        { "id": "wikipedia", "host": "www.wikipedia.org", "url": "https://www.wikipedia.org", "tags": ["media"] },
+        { "id": "google", "host": "www.google.com", "url": "https://www.google.com", "tags": ["foreign"] },
+        { "id": "reddit", "host": "www.reddit.com", "url": "https://www.reddit.com", "tags": ["foreign"] },
+        { "id": "stackoverflow", "host": "stackoverflow.com", "url": "https://stackoverflow.com", "tags": ["foreign"] },
+        { "id": "apple", "host": "www.apple.com", "url": "https://www.apple.com", "tags": ["foreign"] },
+        { "id": "microsoft", "host": "www.microsoft.com", "url": "https://www.microsoft.com", "tags": ["foreign"] },
+        { "id": "cloudflare", "host": "www.cloudflare.com", "url": "https://www.cloudflare.com", "tags": ["foreign"] },
+        { "id": "4pda", "host": "4pda.to", "url": "https://4pda.to", "tags": ["media"] }
+      ]
+    },
+    {
+      "id": "restricted",
+      "label_ru": "Зарубежные / ограниченные",
+      "label_en": "Foreign / restricted",
+      "endpoints": [
+        { "id": "youtube", "host": "www.youtube.com", "url": "https://www.youtube.com", "tags": ["foreign"] },
+        { "id": "instagram", "host": "www.instagram.com", "url": "https://www.instagram.com", "tags": ["foreign"] },
+        { "id": "facebook", "host": "www.facebook.com", "url": "https://www.facebook.com", "tags": ["foreign"] },
+        { "id": "x", "host": "x.com", "url": "https://x.com", "tags": ["foreign"] },
+        { "id": "discord", "host": "discord.com", "url": "https://discord.com", "tags": ["foreign"] },
+        { "id": "linkedin", "host": "www.linkedin.com", "url": "https://www.linkedin.com", "tags": ["foreign"] },
+        { "id": "telegramweb", "host": "web.telegram.org", "url": "https://web.telegram.org", "tags": ["foreign"] },
+        { "id": "whatsapp", "host": "www.whatsapp.com", "url": "https://www.whatsapp.com", "tags": ["foreign"] },
+        { "id": "bbc", "host": "www.bbc.com", "url": "https://www.bbc.com", "tags": ["media", "foreign"] },
+        { "id": "chatgpt", "host": "chatgpt.com", "url": "https://chatgpt.com", "tags": ["foreign"] }
+      ]
+    }
+  ],
+  "dns_controls": [
+    "ya.ru",
+    "gosuslugi.ru",
+    "youtube.com",
+    "instagram.com"
+  ]
+}

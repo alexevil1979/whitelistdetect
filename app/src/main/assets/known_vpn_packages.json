@@ -1,0 +1,14 @@
+{
+  "packages": [
+    { "id": "wireguard", "label": "WireGuard", "packageName": "com.wireguard.android" },
+    { "id": "openvpn_ics", "label": "OpenVPN for Android", "packageName": "de.blinkt.openvpn" },
+    { "id": "openvpn_connect", "label": "OpenVPN Connect", "packageName": "net.openvpn.openvpn" },
+    { "id": "outline", "label": "Outline", "packageName": "org.outline.android.client" },
+    { "id": "amnezia", "label": "AmneziaVPN", "packageName": "org.amnezia.awg" },
+    { "id": "amnezia_vpn", "label": "AmneziaVPN", "packageName": "org.amnezia.vpn" },
+    { "id": "singbox_sfa", "label": "sing-box", "packageName": "io.nekohasekai.sfa" },
+    { "id": "orbot", "label": "Orbot", "packageName": "org.torproject.android" },
+    { "id": "tailscale", "label": "Tailscale", "packageName": "com.tailscale.ipn" },
+    { "id": "warp", "label": "1.1.1.1", "packageName": "com.cloudflare.onedotonedotonedotone" }
+  ]
+}
