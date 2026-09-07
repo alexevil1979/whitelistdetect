@@ -129,6 +129,11 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
                         notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                 },
+                onOpenPrivacy = {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(context.getString(R.string.privacy_url))),
+                    )
+                },
             )
         }
     }

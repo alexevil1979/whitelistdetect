@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Политика конфиденциальности — Whitelist Pulse</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 44rem; margin: 2rem auto; padding: 0 1.2rem; line-height: 1.55; color: #0f172a; }
+    h1, h2 { line-height: 1.25; }
+    .muted { color: #475569; }
+    a { color: #0f766e; }
+  </style>
+</head>
+<body>
+  <p class="muted">Whitelist Pulse · обновлено 7 сентября 2026</p>
+  <h1>Политика конфиденциальности</h1>
+  <p>Whitelist Pulse — диагностическое Android-приложение. Оно <strong>не является VPN</strong>, не обходит ограничения и не связано с Минцифры, операторами связи или Роскомнадзором.</p>
+
+  <h2>Какие данные обрабатываются</h2>
+  <ul>
+    <li><strong>На устройстве:</strong> настройки, история последних проверок, пользовательские списки сайтов. Они не выгружаются на наши серверы. Своих серверов у приложения нет.</li>
+    <li><strong>Проверки сайтов:</strong> приложение делает короткие HTTPS-запросы к выбранным вами или встроенным сайтам, чтобы понять, открывается страница или нет. Это запросы с вашего IP, как в обычном браузере.</li>
+    <li><strong>GeoIP:</strong> публичный IP и страна запрашиваются у сторонних сервисов <a href="https://www.ipify.org/">ipify</a>, <a href="https://ipapi.co/">ipapi.co</a>, <a href="https://ipinfo.io/">ipinfo.io</a>, <a href="https://ifconfig.co/">ifconfig.co</a>. Мы не получаем копию этих ответов: они приходят сразу на устройство.</li>
+    <li><strong>VPN-приложения:</strong> проверяется только наличие нескольких известных пакетов (через манифест <code>queries</code>). Полный список установленных приложений не читается и никуда не отправляется.</li>
+  </ul>
+
+  <h2>Разрешения</h2>
+  <ul>
+    <li>Интернет и состояние сети — для проверок и GeoIP.</li>
+    <li>Уведомления — кружок в строке состояния и опциональные уведомления о результате, только с вашего согласия.</li>
+    <li>Фоновый сервис dataSync — если включён «значок в строке состояния», раз в минуту повторяется компактная проверка. Это можно выключить в настройках.</li>
+  </ul>
+
+  <h2>Чего нет</h2>
+  <p>Нет аккаунтов, рекламы, трекеров, аналитики, продажи данных и обязательных собственных серверов. История не синхронизируется в облако.</p>
+
+  <h2>Дети</h2>
+  <p>Приложение не предназначено специально для детей и не собирает данные для детских профилей.</p>
+
+  <h2>Контакт</h2>
+  <p>Вопросы по данным: <a href="https://github.com/alexevil1979/whitelistdetect/issues">issues в репозитории</a>.</p>
+
+  <hr />
+  <h1 lang="en">Privacy policy</h1>
+  <p lang="en">Whitelist Pulse is a network diagnostic Android app. It is <strong>not a VPN</strong>, does not bypass restrictions, and is not affiliated with government or carrier services.</p>
+  <p lang="en">Checks run on-device. Site probes and GeoIP lookups (ipify, ipapi.co, ipinfo.io, ifconfig.co) leave the device only as ordinary HTTPS requests from your IP. History and custom site lists stay local. There is no telemetry, ads, or first-party server. Optional status-bar monitoring repeats a compact check every minute and can be turned off. Contact: <a href="https://github.com/alexevil1979/whitelistdetect/issues">GitHub issues</a>.</p>
+</body>
+</html>

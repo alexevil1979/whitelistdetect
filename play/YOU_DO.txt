@@ -1,0 +1,32 @@
+Сделано локально. Тебе руками только это.
+
+1) Сохрани пароль ключа
+   Файл: C:\Users\1\Documents\whitelistdetect\play-upload-key.txt
+   И файл ключа: C:\Users\1\Documents\whitelistdetect\pulse-upload.jks
+   Скопируй оба в менеджер паролей / флешку. Без них обновления в Play невозможны.
+   Эти файлы НЕ в git.
+
+2) Google Play Console — https://play.google.com/console
+   Create app: Whitelist Pulse, приложение, бесплатное, русский.
+   Включить Play App Signing, загрузить upload-ключ (тот же .jks, alias pulse).
+
+3) Загрузить AAB
+   C:\Users\1\Documents\whitelistdetect\app\build\outputs\bundle\release\app-release.aab
+   (пакет ru.whitelist.pulse, version 1.0.0 / versionCode 1)
+   Сначала Closed testing, не Production.
+
+4) Витрина — скопировать из папки play\
+   listing-ru.txt, listing-en.txt
+   Иконка: play\icon-512.png
+   Баннер: play\feature-graphic.png
+   Скриншоты телефона: play\screenshots\01-home.png … 04-settings.png
+   Политика: https://alexevil1979.github.io/whitelistdetect/privacy.html
+   Data safety: play\data-safety.txt
+
+5) Closed testing
+   Добавить минимум 12 тестеров с Gmail, они должны принять приглашение.
+   Держать тест 14 дней, потом подать в Production.
+
+6) Анкеты Play
+   Не VPN, нет рекламы, нет покупок, 18+ или IARC как получится.
+   Foreground service = Data sync: значок в шторке, проверка раз в минуту, выключается в настройках.

@@ -137,6 +137,8 @@
     <string name="settings_update_lists">Update built-in lists from a file</string>
     <string name="settings_about">About</string>
     <string name="settings_privacy">Policy: checks run on-device, history stays local, no telemetry, no mandatory first-party servers.</string>
+    <string name="settings_privacy_open">Open privacy policy</string>
+    <string name="privacy_url">https://alexevil1979.github.io/whitelistdetect/privacy.html</string>
     <string name="settings_whitelist_only">Allowlist-only mode</string>
     <string name="settings_notify">Notify about check results</string>
     <string name="settings_status_icon">Status bar icon</string>

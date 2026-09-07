@@ -37,6 +37,7 @@ fun SettingsScreen(
     onPickLists: () -> Unit,
     onImportCustomFile: () -> Unit = {},
     onRequestNotificationPermission: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -155,6 +156,7 @@ fun SettingsScreen(
             Text(stringResource(R.string.disclaimer_full))
             Text(stringResource(R.string.not_official), color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(stringResource(R.string.settings_privacy), style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(onClick = onOpenPrivacy) { Text(stringResource(R.string.settings_privacy_open)) }
         }
         Spacer(Modifier.height(28.dp))
     }

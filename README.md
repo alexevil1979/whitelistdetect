@@ -42,7 +42,9 @@ minSdk 26 · targetSdk 35 · Kotlin 2.x · Jetpack Compose · Material 3 · Hilt
 - `INTERNET`
 - `ACCESS_NETWORK_STATE`
 - `ACCESS_WIFI_STATE`
-- `POST_NOTIFICATIONS` — только если пользователь явно включает уведомления о результате или запускает проверку из плитки
+- `POST_NOTIFICATIONS` — кружок в строке состояния и опциональные уведомления о результате
+- `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_DATA_SYNC` — фоновая проверка раз в минуту, если включён значок
+- `RECEIVE_BOOT_COMPLETED` — поднять индикатор после перезагрузки
 - `VIBRATE` — тактильный отклик по завершении проверки
 
 `QUERY_ALL_PACKAGES` не используется. Известные VPN-клиенты проверяются точечно через `getPackageInfo` и блок `<queries>` в манифесте. Список установленных приложений никуда не отправляется.

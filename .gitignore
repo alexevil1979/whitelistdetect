@@ -25,6 +25,8 @@ kotlin-js-store/
 *.hprof
 .navigation/
 /keystore.properties
+play-upload-key.txt
+.env
 .env
 .env.*
 !*.example

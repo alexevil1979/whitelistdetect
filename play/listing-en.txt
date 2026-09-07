@@ -1,0 +1,22 @@
+Name: Whitelist Pulse
+
+Short description (EN, 80 chars):
+See if your connection looks like allowlist, regular internet, or offline
+
+Full description (EN):
+Whitelist Pulse diagnoses your current network: regular internet, allowlist-like restrictions, no connectivity, VPN-skewed results, likely abroad/bypass, or mixed/unstable answers.
+
+This is a diagnostic tool. It does not bypass restrictions, is not a VPN, and is not affiliated with ministries, carriers, or regulators.
+
+Features:
+• On-device HTTPS checks of control site groups
+• Plain-language verdict
+• Network type, VPN hints, GeoIP, DNS
+• Custom sites, home-screen widget, Quick Settings tile
+• Optional status-bar monitor (compact check every minute)
+• Russian and English, no telemetry, history stays on device
+
+Site lists are an unofficial public-data snapshot and may go stale.
+
+Category: Tools
+Privacy: https://alexevil1979.github.io/whitelistdetect/privacy.html
