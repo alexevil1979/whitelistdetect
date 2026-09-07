@@ -102,7 +102,8 @@ object StatusIndicator {
     }
 
     private fun iconBitmap(context: Context, @DrawableRes res: Int, color: Int, dp: Int): Bitmap {
-        val size = (dp * context.resources.displayMetrics.density).toInt().coerceAtLeast(48)
+        val density = context.resources.displayMetrics.density
+        val size = (dp * density).toInt().coerceIn(48, 192)
         val drawable = requireNotNull(ContextCompat.getDrawable(context, res)).mutate()
         drawable.setTint(color)
         val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)

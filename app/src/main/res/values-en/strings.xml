@@ -128,6 +128,12 @@
     <string name="settings_language">Language</string>
     <string name="lang_ru">Русский</string>
     <string name="lang_en">English</string>
+    <string name="lang_th">ไทย</string>
+    <string name="lang_fa">فارسی</string>
+    <string name="lang_zh">中文</string>
+    <string name="settings_language_regions_hint">UI language for regions: Russia, Thailand, Iran, China (+ English).</string>
+    <string name="boot_resume_monitor">After reboot, open the app to resume the status-bar network icon</string>
+    <string name="notification_channel_resume">Resume monitoring</string>
     <string name="settings_autocheck">Auto-check on launch</string>
     <string name="settings_interval">Repeat interval (while the app is open)</string>
     <string name="settings_timeout">Request timeout, sec</string>

@@ -128,6 +128,12 @@
     <string name="settings_language">Язык</string>
     <string name="lang_ru">Русский</string>
     <string name="lang_en">English</string>
+    <string name="lang_th">ไทย</string>
+    <string name="lang_fa">فارسی</string>
+    <string name="lang_zh">中文</string>
+    <string name="settings_language_regions_hint">Язык интерфейса для регионов: Россия, Таиланд, Иран, Китай (+ English).</string>
+    <string name="boot_resume_monitor">После перезагрузки откройте приложение, чтобы снова включить значок сети</string>
+    <string name="notification_channel_resume">Возобновление мониторинга</string>
     <string name="settings_autocheck">Автопроверка при запуске</string>
     <string name="settings_interval">Интервал повторной проверки (пока открыто)</string>
     <string name="settings_timeout">Таймаут запроса, сек</string>

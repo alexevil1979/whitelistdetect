@@ -68,17 +68,26 @@ fun SettingsScreen(
             }
         }
         CardBlock(stringResource(R.string.settings_language)) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = settings.language == AppLanguage.RU,
-                    onClick = { onChange(settings.copy(language = AppLanguage.RU)) },
-                    label = { Text(stringResource(R.string.lang_ru)) },
-                )
-                FilterChip(
-                    selected = settings.language == AppLanguage.EN,
-                    onClick = { onChange(settings.copy(language = AppLanguage.EN)) },
-                    label = { Text(stringResource(R.string.lang_en)) },
-                )
+            Text(
+                stringResource(R.string.settings_language_regions_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf(
+                    listOf(AppLanguage.RU to R.string.lang_ru, AppLanguage.EN to R.string.lang_en, AppLanguage.TH to R.string.lang_th),
+                    listOf(AppLanguage.FA to R.string.lang_fa, AppLanguage.ZH to R.string.lang_zh),
+                ).forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        row.forEach { (lang, label) ->
+                            FilterChip(
+                                selected = settings.language == lang,
+                                onClick = { onChange(settings.copy(language = lang)) },
+                                label = { Text(stringResource(label)) },
+                            )
+                        }
+                    }
+                }
             }
         }
         CardBlock(stringResource(R.string.settings_autocheck)) {

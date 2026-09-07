@@ -48,6 +48,9 @@ enum class ThemeMode {
 enum class AppLanguage {
     RU,
     EN,
+    TH,
+    FA,
+    ZH,
 }
 
 enum class SiteSort {

@@ -50,7 +50,13 @@ class PulseApplication : Application() {
                 .map { it.language }
                 .distinctUntilChanged()
                 .collect { language ->
-                    val tag = if (language == AppLanguage.EN) "en" else "ru"
+                    val tag = when (language) {
+                        AppLanguage.EN -> "en"
+                        AppLanguage.TH -> "th"
+                        AppLanguage.FA -> "fa"
+                        AppLanguage.ZH -> "zh-CN"
+                        AppLanguage.RU -> "ru"
+                    }
                     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
                 }
         }
