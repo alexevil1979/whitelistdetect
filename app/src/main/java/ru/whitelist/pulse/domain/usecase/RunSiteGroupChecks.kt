@@ -14,9 +14,16 @@ class RunSiteGroupChecks @Inject constructor(
         endpoints: List<SiteEndpoint>,
         settings: ProbeSettings,
         groups: Set<SiteGroup>? = null,
+        limitPerGroup: Int? = null,
     ): List<SiteCheckResult> {
         val selected = endpoints.filter { endpoint ->
             endpoint.enabled && (groups == null || endpoint.group in groups) && groupAllowed(endpoint.group, settings)
+        }.let { list ->
+            if (limitPerGroup == null) {
+                list
+            } else {
+                list.groupBy { it.group }.flatMap { (_, items) -> items.take(limitPerGroup) }
+            }
         }
         return probeRepository.probe(
             endpoints = selected,

@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.whitelist.pulse.domain.model.AppLanguage
 import ru.whitelist.pulse.domain.repository.SettingsRepository
+import ru.whitelist.pulse.monitor.MonitorController
+import ru.whitelist.pulse.notify.StatusIndicator
+import ru.whitelist.pulse.ui.ProbeCoordinator
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -24,6 +27,9 @@ class PulseApplication : Application() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var coordinator: ProbeCoordinator
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     override fun onCreate() {
@@ -32,6 +38,8 @@ class PulseApplication : Application() {
             Timber.plant(Timber.DebugTree())
         }
         createNotificationChannel()
+        StatusIndicator.ensureChannel(this)
+        coordinator.start()
         scope.launch {
             settingsRepository.settings
                 .map { it.language }
@@ -39,6 +47,14 @@ class PulseApplication : Application() {
                 .collect { language ->
                     val tag = if (language == AppLanguage.EN) "en" else "ru"
                     AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
+                }
+        }
+        scope.launch {
+            settingsRepository.settings
+                .map { it.backgroundMonitor }
+                .distinctUntilChanged()
+                .collect { enabled ->
+                    MonitorController.sync(this@PulseApplication, enabled)
                 }
         }
     }

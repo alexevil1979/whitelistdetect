@@ -41,11 +41,11 @@ class ProbeTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
-        coordinator.start(scope)
+        coordinator.start()
         qsTile?.state = Tile.STATE_ACTIVE
         qsTile?.updateTile()
         val startedAt = coordinator.state.value.lastCheckedAt
-        coordinator.run(scope)
+        coordinator.run()
         scope.launch {
             val state = withTimeoutOrNull(45_000) {
                 coordinator.state.first { current ->

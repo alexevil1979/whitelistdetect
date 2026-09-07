@@ -124,10 +124,10 @@ fun ChecksScreen(
             item { FilterChip(selected = sort == SiteSort.LATENCY, onClick = { sort = SiteSort.LATENCY }, label = { Text(stringResource(R.string.sort_latency)) }) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { onCheckGroup(currentGroup) }, enabled = !state.scanning) {
+            OutlinedButton(onClick = { onCheckGroup(currentGroup) }, enabled = !state.uiScanning) {
                 Text(stringResource(R.string.action_check_group))
             }
-            Button(onClick = onCheckAll, enabled = !state.scanning) {
+            Button(onClick = onCheckAll, enabled = !state.uiScanning) {
                 Text(stringResource(R.string.action_check_all))
             }
         }

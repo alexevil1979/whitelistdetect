@@ -4,7 +4,9 @@ import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -52,7 +54,11 @@ data class ProbeUiState(
     val comparison: ComparisonDelta = ComparisonDelta.NONE,
     val dnsLookups: List<DnsLookupResult> = emptyList(),
     val error: String? = null,
-)
+    val backgroundScan: Boolean = false,
+    val resultSeq: Int = 0,
+) {
+    val uiScanning: Boolean get() = scanning && !backgroundScan
+}
 
 @Singleton
 class ProbeCoordinator @Inject constructor(
@@ -70,26 +76,28 @@ class ProbeCoordinator @Inject constructor(
 ) {
     private val _state = MutableStateFlow(ProbeUiState())
     val state: StateFlow<ProbeUiState> = _state.asStateFlow()
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var intervalJob: Job? = null
     private var probeJob: Job? = null
     private var started = false
+    private var runGeneration = 0
 
-    fun start(scope: CoroutineScope) {
+    fun start() {
         if (started) return
         started = true
-        scope.launch {
+        appScope.launch {
             probeRepository.progress.collect { progress ->
                 _state.update { it.copy(progress = progress) }
             }
         }
-        scope.launch {
+        appScope.launch {
             probeRepository.lastResults.collect { results ->
                 if (results.isNotEmpty()) {
                     _state.update { it.copy(results = mergeResults(it.results, results)) }
                 }
             }
         }
-        scope.launch {
+        appScope.launch {
             combine(
                 settingsStore.settings,
                 observeNetworkSnapshot(),
@@ -108,21 +116,21 @@ class ProbeCoordinator @Inject constructor(
                 }
             }.collect { }
         }
-        scope.launch {
+        appScope.launch {
             runCatching { lookupGeoIp() }.getOrNull()?.let { geo ->
                 _state.update { st ->
                     st.copy(snapshot = st.snapshot?.copy(geo = geo) ?: st.snapshot)
                 }
             }
         }
-        scope.launch {
+        appScope.launch {
             settingsStore.settings.collect { settings ->
                 intervalJob?.cancel()
                 if (settings.foregroundIntervalSec > 0) {
-                    intervalJob = scope.launch {
+                    intervalJob = appScope.launch {
                         while (true) {
                             delay(settings.foregroundIntervalSec * 1000L)
-                            run(scope)
+                            run()
                         }
                     }
                 }
@@ -130,22 +138,34 @@ class ProbeCoordinator @Inject constructor(
         }
     }
 
-    fun run(scope: CoroutineScope, groups: Set<SiteGroup>? = null) {
-        if (_state.value.scanning) return
+    fun run(groups: Set<SiteGroup>? = null, compact: Boolean = false): Job? {
+        if (_state.value.scanning && compact) return probeJob
+        val generation = ++runGeneration
         probeJob?.cancel()
-        probeJob = scope.launch {
-            _state.update {
-                it.copy(
+        probeJob = appScope.launch {
+            _state.update { current ->
+                current.copy(
                     scanning = true,
+                    backgroundScan = compact,
                     error = null,
-                    verdict = it.verdict?.copy(kind = VerdictKind.SCANNING) ?: idleVerdict(),
+                    verdict = if (compact) {
+                        current.verdict
+                    } else {
+                        current.verdict?.copy(kind = VerdictKind.SCANNING) ?: idleVerdict()
+                    },
                 )
             }
             try {
                 val snapshot = networkRepository.currentSnapshot()
                 val settings = settingsStore.current()
                 val all = endpointRepository.endpoints() + _state.value.customSites
-                val results = runChecks(all, settings, groups)
+                val compactGroups = setOf(SiteGroup.WHITELIST, SiteGroup.REGULAR, SiteGroup.RESTRICTED)
+                val results = runChecks(
+                    endpoints = all,
+                    settings = settings,
+                    groups = groups ?: if (compact) compactGroups else null,
+                    limitPerGroup = if (compact) COMPACT_PER_GROUP else null,
+                )
                 val vpnActive = snapshot.vpn.isActive
                 val verdict = computeVerdict.fromResults(
                     results = results,
@@ -154,48 +174,63 @@ class ProbeCoordinator @Inject constructor(
                     includeRegular = settings.includeRegular && !settings.whitelistOnlyMode,
                     includeRestricted = settings.includeRestricted && !settings.whitelistOnlyMode,
                 )
-                val dns = networkRepository.lookupDns(endpointRepository.dnsControls())
+                val dns = if (compact) {
+                    _state.value.dnsLookups
+                } else {
+                    networkRepository.lookupDns(endpointRepository.dnsControls())
+                }
                 val previous = historyRepository.latest(1).firstOrNull()
                 val comparison = compare(previous, verdict)
-                val entry = CheckHistoryEntry(
-                    id = UUID.randomUUID().toString(),
-                    timestampEpochMs = System.currentTimeMillis(),
-                    verdictKind = verdict.kind,
-                    confidence = verdict.confidence,
-                    networkType = snapshot.transport,
-                    vpnActive = vpnActive,
-                    groupARate = verdict.groupStats.find { it.group == SiteGroup.WHITELIST }?.rate ?: 0f,
-                    groupBRate = verdict.groupStats.find { it.group == SiteGroup.REGULAR }?.rate ?: 0f,
-                    groupCRate = verdict.groupStats.find { it.group == SiteGroup.RESTRICTED }?.rate ?: 0f,
-                    publicIp = snapshot.geo?.ipv4,
-                    country = snapshot.geo?.countryCode,
-                )
-                historyRepository.add(entry)
+                if (!compact) {
+                    val entry = CheckHistoryEntry(
+                        id = UUID.randomUUID().toString(),
+                        timestampEpochMs = System.currentTimeMillis(),
+                        verdictKind = verdict.kind,
+                        confidence = verdict.confidence,
+                        networkType = snapshot.transport,
+                        vpnActive = vpnActive,
+                        groupARate = verdict.groupStats.find { it.group == SiteGroup.WHITELIST }?.rate ?: 0f,
+                        groupBRate = verdict.groupStats.find { it.group == SiteGroup.REGULAR }?.rate ?: 0f,
+                        groupCRate = verdict.groupStats.find { it.group == SiteGroup.RESTRICTED }?.rate ?: 0f,
+                        publicIp = snapshot.geo?.ipv4,
+                        country = snapshot.geo?.countryCode,
+                    )
+                    historyRepository.add(entry)
+                }
                 settingsStore.saveLastVerdict(verdict.kind, vpnActive)
                 runCatching { VerdictWidget.push(context, verdict.kind, vpnActive) }
+                if (generation != runGeneration) return@launch
                 _state.update {
                     it.copy(
                         snapshot = snapshot.copy(geo = snapshot.geo ?: it.snapshot?.geo),
                         results = mergeResults(it.results, results),
                         verdict = verdict,
                         scanning = false,
+                        backgroundScan = false,
                         lastCheckedAt = System.currentTimeMillis(),
-                        comparison = comparison,
+                        comparison = if (compact) it.comparison else comparison,
                         dnsLookups = dns,
+                        resultSeq = if (compact) it.resultSeq else it.resultSeq + 1,
                     )
                 }
             } catch (cancelled: CancellationException) {
-                _state.update { it.copy(scanning = false) }
+                if (generation == runGeneration) {
+                    _state.update { it.copy(scanning = false, backgroundScan = false) }
+                }
                 throw cancelled
             } catch (error: Throwable) {
-                _state.update { it.copy(scanning = false, error = error.message) }
+                if (generation == runGeneration) {
+                    _state.update { it.copy(scanning = false, backgroundScan = false, error = error.message) }
+                }
             }
         }
+        return probeJob
     }
 
     fun cancelProbe() {
+        runGeneration++
         probeJob?.cancel()
-        _state.update { it.copy(scanning = false) }
+        _state.update { it.copy(scanning = false, backgroundScan = false) }
     }
 
     private fun mergeResults(old: List<SiteCheckResult>, incoming: List<SiteCheckResult>): List<SiteCheckResult> {
@@ -228,4 +263,8 @@ class ProbeCoordinator @Inject constructor(
         groupStats = emptyList(),
         vpnDistorts = false,
     )
+
+    private companion object {
+        const val COMPACT_PER_GROUP = 5
+    }
 }

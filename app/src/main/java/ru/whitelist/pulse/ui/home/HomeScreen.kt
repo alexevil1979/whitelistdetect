@@ -70,11 +70,11 @@ fun HomeScreen(
     val haptic = LocalHapticFeedback.current
     val kind = state.verdict?.kind ?: VerdictKind.IDLE
     var wasScanning by remember { mutableStateOf(false) }
-    LaunchedEffect(state.scanning) {
-        if (wasScanning && !state.scanning) {
+    LaunchedEffect(state.uiScanning) {
+        if (wasScanning && !state.uiScanning) {
             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
         }
-        wasScanning = state.scanning
+        wasScanning = state.uiScanning
     }
     var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(state.lastCheckedAt) {
@@ -84,7 +84,7 @@ fun HomeScreen(
         }
     }
     PullToRefreshBox(
-        isRefreshing = state.scanning,
+        isRefreshing = state.uiScanning,
         onRefresh = {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             onCheck()
@@ -103,13 +103,13 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (state.snapshot?.hasValidatedInternet == false && !state.scanning && kind != VerdictKind.IDLE) {
+            if (state.snapshot?.hasValidatedInternet == false && !state.uiScanning && kind != VerdictKind.IDLE) {
                 OfflineBanner(onCheck)
             }
             VerdictHero(
                 kind = kind,
                 underlyingKind = state.verdict?.underlyingKind,
-                scanning = state.scanning,
+                scanning = state.uiScanning,
                 subtitle = buildSubtitle(context, state),
                 hint = stringResource((state.verdict?.kind ?: VerdictKind.PARTIAL).hintRes()),
                 vpnDistorts = state.verdict?.vpnDistorts == true,
@@ -126,10 +126,10 @@ fun HomeScreen(
                     .fillMaxWidth()
                     .height(56.dp)
                     .semantics { contentDescription = context.getString(R.string.cd_check_now) },
-                enabled = !state.scanning,
+                enabled = !state.uiScanning,
                 shape = RoundedCornerShape(20.dp),
             ) {
-                Text(stringResource(if (state.scanning) R.string.verdict_scanning else R.string.action_check_now))
+                Text(stringResource(if (state.uiScanning) R.string.verdict_scanning else R.string.action_check_now))
             }
             Text(
                 text = stringResource(R.string.last_updated, relativeTime(context, state.lastCheckedAt, now)),
@@ -284,7 +284,7 @@ private fun GroupRings(state: ProbeUiState) {
         groups.forEach { group ->
             val stats = state.verdict?.groupStats?.find { it.group == group }
             val live = state.progress.groupCompleted[group]
-            val progress = if (state.scanning && live != null && live.second > 0) {
+            val progress = if (state.uiScanning && live != null && live.second > 0) {
                 live.first.toFloat() / live.second.toFloat()
             } else {
                 stats?.rate ?: 0f

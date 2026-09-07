@@ -41,6 +41,7 @@ class SettingsDataStore @Inject constructor(
             prefs[INC_CUSTOM] = next.includeCustom
             prefs[WHITELIST_ONLY] = next.whitelistOnlyMode
             prefs[NOTIFY] = next.notifyOnResult
+            prefs[BACKGROUND] = next.backgroundMonitor
         }
     }
 
@@ -71,6 +72,7 @@ class SettingsDataStore @Inject constructor(
         includeCustom = this[INC_CUSTOM] ?: true,
         whitelistOnlyMode = this[WHITELIST_ONLY] ?: false,
         notifyOnResult = this[NOTIFY] ?: false,
+        backgroundMonitor = this[BACKGROUND] ?: true,
     )
 
     private companion object {
@@ -86,6 +88,7 @@ class SettingsDataStore @Inject constructor(
         val INC_CUSTOM = booleanPreferencesKey("inc_custom")
         val WHITELIST_ONLY = booleanPreferencesKey("whitelist_only")
         val NOTIFY = booleanPreferencesKey("notify")
+        val BACKGROUND = booleanPreferencesKey("background_monitor")
         val LAST_VERDICT = stringPreferencesKey("last_verdict")
         val LAST_VPN = booleanPreferencesKey("last_vpn")
     }

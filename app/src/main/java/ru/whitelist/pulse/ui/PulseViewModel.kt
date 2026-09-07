@@ -37,16 +37,16 @@ class PulseViewModel @Inject constructor(
     fun bootstrap() {
         if (started) return
         started = true
-        coordinator.start(viewModelScope)
+        coordinator.start()
         viewModelScope.launch {
             val settings = settingsRepository.current()
-            if (settings.autoCheckOnLaunch) coordinator.run(viewModelScope)
+            if (settings.autoCheckOnLaunch) coordinator.run()
         }
     }
 
-    fun checkAll() = coordinator.run(viewModelScope)
+    fun checkAll() = coordinator.run()
 
-    fun checkGroup(group: SiteGroup) = coordinator.run(viewModelScope, setOf(group))
+    fun checkGroup(group: SiteGroup) = coordinator.run(setOf(group))
 
     fun updateSettings(settings: ProbeSettings) {
         viewModelScope.launch { settingsRepository.update { settings } }
@@ -116,9 +116,4 @@ class PulseViewModel @Inject constructor(
         getApplication<Application>().contentResolver.openInputStream(uri)
             ?.bufferedReader()
             ?.use { it.readText() }
-
-    override fun onCleared() {
-        coordinator.cancelProbe()
-        super.onCleared()
-    }
 }

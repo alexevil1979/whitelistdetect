@@ -91,6 +91,15 @@ fun SettingsScreen(
                 if (it) onRequestNotificationPermission()
                 onChange(settings.copy(notifyOnResult = it))
             }
+            SwitchRow(stringResource(R.string.settings_status_icon), settings.backgroundMonitor) {
+                if (it) onRequestNotificationPermission()
+                onChange(settings.copy(backgroundMonitor = it))
+            }
+            Text(
+                stringResource(R.string.settings_status_icon_hint),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Text(stringResource(R.string.settings_interval), style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(0 to R.string.interval_off, 30 to R.string.interval_30s, 60 to R.string.interval_1m, 300 to R.string.interval_5m).forEach { (sec, res) ->

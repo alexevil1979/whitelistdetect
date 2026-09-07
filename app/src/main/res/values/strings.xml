@@ -139,6 +139,10 @@
     <string name="settings_privacy">Политика: проверки с устройства, история только локально, без телеметрии и без обязательных своих серверов.</string>
     <string name="settings_whitelist_only">Режим «только белый список»</string>
     <string name="settings_notify">Уведомлять о результате проверки</string>
+    <string name="settings_status_icon">Кружок в строке состояния</string>
+    <string name="settings_status_icon_hint">Раз в минуту в фоне проверяет доступность сайтов и обновляет цветной кружок рядом со значками сети. Цвет совпадает с вердиктом на главной.</string>
+    <string name="notification_channel_status">Индикатор сети</string>
+    <string name="status_indicator_subtitle">Фоновая проверка раз в минуту</string>
     <string name="interval_off">Выкл</string>
     <string name="interval_30s">30 сек</string>
     <string name="interval_1m">1 мин</string>

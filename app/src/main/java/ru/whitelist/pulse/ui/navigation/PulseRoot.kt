@@ -214,8 +214,13 @@ fun PulseRoot(viewModel: PulseViewModel = hiltViewModel()) {
     LaunchedEffect(state.error) {
         state.error?.let { snackbar.showSnackbar(it) }
     }
-    LaunchedEffect(state.scanning, state.verdict, state.settings.notifyOnResult) {
-        if (!state.scanning && state.settings.notifyOnResult && state.verdict != null && state.lastCheckedAt != null) {
+    LaunchedEffect(state.settings.backgroundMonitor) {
+        if (state.settings.backgroundMonitor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    LaunchedEffect(state.resultSeq, state.settings.notifyOnResult) {
+        if (state.resultSeq > 0 && state.settings.notifyOnResult && state.verdict != null) {
             ProbeNotifier.notify(context, context.getString(state.verdict!!.kind.titleRes()))
         }
     }
